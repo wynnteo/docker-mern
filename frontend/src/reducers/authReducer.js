@@ -7,13 +7,6 @@ export const initialState = {
   isAuthenticated: false,
 };
 
-const updateObject = (oldObject, updatedProperties) => {
-  return {
-    ...oldObject,
-    ...updatedProperties,
-  };
-};
-
 const authStartReducer = (state, action) => {
   return {
     ...state,
@@ -50,6 +43,21 @@ const authLogoutReducer = (state, action) => {
   };
 };
 
+const resetPasswordReducer = (state, action) => {
+  return {
+    ...state,
+    error: null,
+    loading: false,
+  };
+};
+
+const resetPasswordFailReducer = (state, action) => {
+  return {
+    ...state,
+    error: action.error
+  };
+};
+
 const reducer = (state = initialState, action) => {
   switch (action.type) {
     case actionTypes.AUTH_START:
@@ -60,6 +68,10 @@ const reducer = (state = initialState, action) => {
       return authFailReducer(state, action);
     case actionTypes.AUTH_LOGOUT:
       return authLogoutReducer(state, action);
+    case actionTypes.RESET_PASSWORD_SUCCESS:
+      return resetPasswordReducer(state, action);
+    case actionTypes.RESET_PASSWORD_FAIL:
+      return resetPasswordFailReducer(state, action);
     default:
       return state;
   }

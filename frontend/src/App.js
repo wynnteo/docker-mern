@@ -5,6 +5,7 @@ import SignIn from "./components/page/SignIn";
 import SignUp from "./components/page/SignUp";
 import NotFound from "./components/page/NotFound";
 import Dashboard from "./components/layout/Dashboard";
+import ResetPassword from "./components/page/ResetPassword";
 function App() {
   return (
     <Router>
@@ -12,6 +13,7 @@ function App() {
         {/* <Route exact path="/" element={<PrivateRoute component={NotFound} />} /> */}
         <Route exact path="/signin/" element={<SignIn />} />
         <Route exact path="/signup/" element={<SignUp />} />
+        <Route exact path="/resetpassword/" element={<ResetPassword />} />
         <Route exact path="/" element={<Dashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

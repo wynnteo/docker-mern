@@ -1,7 +1,7 @@
 import axios from "axios";
 import * as actionTypes from "./types";
 
-const SESSION_DURATION = process.env.SESSION_DURATION;
+const SESSION_DURATION = process.env.REACT_APP_SESSION_DURATION;
 
 export const authStart = () => {
   return {
@@ -23,6 +23,19 @@ export const authFail = (error) => {
   };
 };
 
+const resetPasswordSuccess = () => {
+  return {
+    type: actionTypes.RESET_PASSWORD_SUCCESS,
+  };
+};
+
+const resetPasswordFail = (error) => {
+  return {
+    type: actionTypes.RESET_PASSWORD_FAIL,
+    error: error,
+  };
+};
+
 export const authLogout = () => {
   const token = localStorage.getItem("token");
   if (token === undefined) {
@@ -30,7 +43,7 @@ export const authLogout = () => {
   } else {
     axios
       .post(
-        `${process.env.API_SERVER}/api/auth/logout/`,
+        `${process.env.REACT_APP_API_SERVER}/api/auth/logout/`,
         {},
         { headers: { Authorization: `Token ${token}` } }
       )
@@ -61,12 +74,12 @@ export const authLogin = (username, password) => {
   return (dispatch) => {
     dispatch(authStart());
     axios
-      .post(`${process.env.API_SERVER}/api/auth/login/`, {
+      .post(`${process.env.REACT_APP_API_SERVER}/api/auth/login/`, {
         username: username,
         password: password,
       })
       .then((res) => {
-        const token = res.data.key;
+        const token = res.data.token;
         const expirationDate = new Date(
           new Date().getTime() + SESSION_DURATION
         );
@@ -85,14 +98,14 @@ export const authSignup = (username, email, password1, password2) => {
   return (dispatch) => {
     dispatch(authStart());
     axios
-      .post(`${process.env.API_SERVER}/api/auth/signup/`, {
+      .post(`${process.env.REACT_APP_API_SERVER}/api/auth/signup/`, {
         username: username,
         email: email,
         password1: password1,
         password2: password2,
       })
       .then((res) => {
-        const token = res.data.key;
+        const token = res.data.token;
         const expirationDate = new Date(
           new Date().getTime() + SESSION_DURATION
         );
@@ -103,6 +116,24 @@ export const authSignup = (username, email, password1, password2) => {
       })
       .catch((err) => {
         dispatch(authFail(err));
+      });
+  };
+};
+
+export const resetPassword = (resetToken, newPassword, navigate) => {
+  return (dispatch) => {
+    dispatch(authStart());
+    axios
+      .post(`${process.env.REACT_APP_API_SERVER}/api/auth/reset-password/`, {
+        resetToken: resetToken,
+        newPassword: newPassword,
+      })
+      .then((res) => {
+        dispatch(resetPasswordSuccess());
+        navigate("/signin")
+      })
+      .catch((err) => {
+        dispatch(resetPasswordFail(err));
       });
   };
 };

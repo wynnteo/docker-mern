@@ -12,10 +12,13 @@ const mongoOpts = {
   useUnifiedTopology: true,
 };
 
-mongoose.connect(DB_URL, mongoOpts, (err, res) => {
-  if (err) {
-    console.error(err);
-  } else {
-    console.log("\nConnected to the Database.");
+async function connectToDatabase() {
+  try {
+    await mongoose.connect(DB_URL);
+    console.log('Connected to MongoDB successfully!');
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
   }
-});
+}
+
+connectToDatabase();

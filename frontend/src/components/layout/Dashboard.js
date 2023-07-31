@@ -1,9 +1,7 @@
-import * as React from "react";
-import { styled, createTheme, ThemeProvider } from "@mui/material/styles";
+import React, { useEffect, useState } from "react";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import MuiDrawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
-import MuiAppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
@@ -11,6 +9,7 @@ import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Link from "@mui/material/Link";
 import Header from "./Header";
+import axios from "axios";
 // import Chart from "./Chart";
 // import Deposits from "./Deposits";
 // import Orders from "./Orders";
@@ -36,6 +35,21 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 const Dashboard = () => {
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    const fetchMessage = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_SERVER}/api/auth/welcome`);
+        setMsg(response.data.msg);
+      } catch (error) {
+        console.error("Error fetching welcome message:", error);
+        setMsg("Error fetching welcome message.");
+      }
+    };
+    fetchMessage();
+  }, []);
+
   return (
     <ThemeProvider theme={defaultTheme}>
       <Box sx={{ display: "flex" }}>
@@ -66,7 +80,7 @@ const Dashboard = () => {
                     height: 240,
                   }}
                 >
-                  {/* <Chart /> */}
+                  {msg}
                 </Paper>
               </Grid>
               {/* Recent Deposits */}
