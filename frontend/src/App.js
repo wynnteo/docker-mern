@@ -1,11 +1,11 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
-import SignIn from "./components/page/SignIn";
-import SignUp from "./components/page/SignUp";
-import NotFound from "./components/page/NotFound";
+import SignIn from "./components/pages/SignIn";
+import SignUp from "./components/pages/SignUp";
+import NotFound from "./components/pages/NotFound";
 import Dashboard from "./components/layout/Dashboard";
-import ResetPassword from "./components/page/ResetPassword";
+import ResetPassword from "./components/pages/ResetPassword";
 function App() {
   return (
     <Router>

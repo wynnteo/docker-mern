@@ -1,8 +1,7 @@
 require("dotenv").config({
-  path: `./.env.development`,
+  path: `./.env.${process.env.NODE_ENV}`,
 });
-// require("./config/db-connection");
-const bodyParser = require("body-parser");
+require("./config/db-connection");
 const express = require("express");
 const expressSession = require("express-session");
 const cors = require("cors");
@@ -12,8 +11,6 @@ const rateLimit = require("express-rate-limit");
 const { infoLogger } = require("./helpers/logger");
 
 const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());

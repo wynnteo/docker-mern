@@ -12,5 +12,5 @@ RUN npm i --location=global nodemon
 # Copy source directory
 COPY . .
 
-EXPOSE 8080
-CMD [ "nodemon" ]
+EXPOSE 400
+CMD [ "npm", "run", "start" ]

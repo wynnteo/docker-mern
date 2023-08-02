@@ -7,10 +7,6 @@ const DB_USER = process.env.DB_USER;
 const DB_PASSWORD = process.env.DB_PASSWORD;
 
 const DB_URL = `mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
-const mongoOpts = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
 
 async function connectToDatabase() {
   try {
