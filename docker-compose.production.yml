@@ -1,6 +1,6 @@
 version: "3"
 services:
-  mongo:
+  mongo-container:
     container_name: docker-mern-db-prod
     build:
       context: ./db
@@ -13,7 +13,7 @@ services:
     networks:
       - mern-network  
 
-  backend:
+  backend-container:
     container_name: docker-mern-backend-prod
     build:
       context: ./backend

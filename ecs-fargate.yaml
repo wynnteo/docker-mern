@@ -45,7 +45,7 @@ Resources:
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: !FindMap ['SubnetConfig', 'VPC', 'CIDR']
+      CidrBlock: !FindInMap ['SubnetConfig', 'VPC', 'CIDR']
       EnableDnsSupport: true
       EnableDnsHostnames: true
 
@@ -53,29 +53,41 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'VPC'
-      CidrBlock: !FindMap ['SubnetConfig', 'PublicOne', 'CIDR']
-      AvailabilityZone: !Select [0, !GetAZs !Ref "AWS::Region"]
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicOne', 'CIDR']
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'VPC'
-      CidrBlock: !FindMap ['SubnetConfig', 'PublicTwo', 'CIDR']
-      AvailabilityZone: !Select [1, !GetAZs !Ref "AWS::Region"]
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicTwo', 'CIDR']
+      AvailabilityZone:
+         Fn::Select:
+         - 1
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'VPC'
-      CidrBlock: !FindMap ['SubnetConfig', 'PrivateOne', 'CIDR']
-      AvailabilityZone: !Select [0, !GetAZs !Ref "AWS::Region"]
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateOne', 'CIDR']
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref 'VPC'
-      CidrBlock: !FindMap ['SubnetConfig', 'PrivateTwo', 'CIDR']
-      AvailabilityZone: !Select [1, !GetAZs !Ref "AWS::Region"]
+      CidrBlock: !FindInMap ['SubnetConfig', 'PrivateTwo', 'CIDR']
+      AvailabilityZone:
+         Fn::Select:
+         - 1
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -111,41 +123,65 @@ Resources:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
 
-  PrivateRouteTable:
+  PrivateRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref 'VPC'
 
-  DefaultPrivateRoute:
+  PrivateRoute1:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTable1
       DestinationCidrBlock: "0.0.0.0/0"
-      NatGatewayId: !Ref NatGateway
+      NatGatewayId: !Ref NatGateway1
 
   PrivateSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet1
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'VPC'
+
+  PrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
 
   PrivateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet2
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId: !Ref PrivateRouteTable2
 
-  NatGatewayEIP:
+  NatGatewayEIP1:
     Type: AWS::EC2::EIP
     DependsOn: VPCGatewayAttachment
     Properties:
       Domain: "vpc"
 
-  NatGateway:
+  NatGateway1:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      AllocationId: !GetAtt NatGatewayEIP1.AllocationId
       SubnetId: !Ref PublicSubnet1
+
+  NatGatewayEIP2:
+    Type: AWS::EC2::EIP
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      Domain: "vpc"
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP2.AllocationId
+      SubnetId: !Ref PublicSubnet2
 
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -153,9 +189,7 @@ Resources:
       GroupDescription: "ALB Security Group"
       VpcId: !Ref 'VPC'
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+        - IpProtocol: -1
           CidrIp: "0.0.0.0/0" # Open to all traffic (Consider restricting access)
 
   LoadBalancerSecurityGroup:
@@ -167,11 +201,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          SourceSecurityGroupId: !Ref ALBSecurityGroup
-        # - IpProtocol: tcp
-        #   FromPort: 443
-        #   ToPort: 443
-        #   SourceSecurityGroupId: !Ref ALBSecurityGroup
+          CidrIp: "0.0.0.0/0"
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -196,40 +226,26 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
-
-  # ALBHTTPSListener:
-  #   Type: AWS::ElasticLoadBalancingV2::Listener
-  #   Properties:
-  #     LoadBalancerArn: !Ref LoadBalancer
-  #     Port: 443
-  #     Protocol: HTTPS
-  #     Certificates:
-  #       - CertificateArn: <YOUR_SSL_CERTIFICATE_ARN>  # Replace with your SSL certificate ARN
-  #     DefaultActions:
-  #       - Type: forward
-  #         TargetGroupArn: !Ref TargetGroup
-
-  # HTTPSListenerRule:
-  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
-  #   Properties:
-  #     ListenerArn: !Ref ALBHTTPSListener
-  #     Conditions:
-  #       - Field: path-pattern
-  #         Values:
-  #           - "*"
-  #     Priority: 1
-  #     Actions:
-  #       - Type: forward
-  #         TargetGroupArn: !Ref TargetGroup
+  
+  ALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListener
+      Priority: 1
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/*"
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DependsOn: 
+      - LoadBalancer
     Properties:
       Name: "mern-app-target-group"
-      HealthCheckIntervalSeconds: 6
-      HealthCheckPath: /
-      HealthCheckProtocol: HTTP
-      HealthyThresholdCount: 2
       Port: 80
       Protocol: HTTP
       TargetType: ip
@@ -271,20 +287,23 @@ Resources:
         - Name: "backend-container"
           Image: !Ref BackendImageURI
           PortMappings:
-            - ContainerPort: 80
+            - ContainerPort: 5000
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-group: !Ref CloudWatchLogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: "mern-backend"
+          Environment:
+            - Name: DB_HOST
+              Value: "mongo-service.mern-service-discovery"
 
   NginxTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: "mern-nginx-task"
-      Cpu: "256"
-      Memory: "512"
+      Cpu: "512"
+      Memory: "1024"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -300,7 +319,9 @@ Resources:
               awslogs-group: !Ref CloudWatchLogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: "mern-nginx"
-
+          Environment:
+            - Name: LOADBALANCER_DNS_NAME
+              Value: "backend-service.mern-service-discovery"
   CloudWatchLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -321,6 +342,36 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
+  ServiceDiscoveryNamespace:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Name: 'mern-service-discovery'
+      Vpc: !Ref 'VPC'
+
+  MongoServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: 'mongo-service'
+      NamespaceId: !Ref ServiceDiscoveryNamespace
+      DnsConfig:
+        DnsRecords:
+          - Type: 'A'
+            TTL: 300
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+
+  BackendServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: 'backend-service'
+      NamespaceId: !Ref ServiceDiscoveryNamespace
+      DnsConfig:
+        DnsRecords:
+          - Type: 'A'
+            TTL: 300
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+
   MongoService:
     Type: AWS::ECS::Service
     Properties:
@@ -335,9 +386,13 @@ Resources:
             - !Ref PrivateSubnet2
           SecurityGroups:
             - !Ref ALBSecurityGroup
+      ServiceRegistries:
+        - RegistryArn: !GetAtt MongoServiceDiscoveryService.Arn
 
   BackendService:
     Type: AWS::ECS::Service
+    DependsOn:
+      - MongoService
     Properties:
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref BackendTaskDefinition
@@ -350,11 +405,13 @@ Resources:
             - !Ref PrivateSubnet2
           SecurityGroups:
             - !Ref ALBSecurityGroup
-      DependsOn:
-        - MongoService
+      ServiceRegistries:
+        - RegistryArn: !GetAtt BackendServiceDiscoveryService.Arn
 
   NginxService:
     Type: AWS::ECS::Service
+    DependsOn:
+      - BackendService
     Properties:
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref NginxTaskDefinition
@@ -367,17 +424,16 @@ Resources:
             - !Ref PublicSubnet2
           SecurityGroups:
             - !Ref ALBSecurityGroup
+          AssignPublicIp: ENABLED
       LoadBalancers:
         - ContainerName: "nginx-container"
           ContainerPort: 80
           TargetGroupArn: !Ref TargetGroup
-      DependsOn:
-        - BackendService
 
 Outputs:
   VpcId:
     Description: The ID of the VPC that this stack is deployed in 
     Value: !Ref 'VPC'
   ExternalUrl:
-    Description: The url of the external load balancer
+    Description: The URL of the external load balancer
     Value: !Sub http://${LoadBalancer.DNSName}

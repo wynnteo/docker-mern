@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 # Copy only the package.json and package-lock.json to leverage Docker cache
 COPY package*.json ./
 # Install production dependencies (avoid installing devDependencies)
-RUN npm ci --only=production
+RUN npm install --omit=dev
 # Copy the rest of the application files
 COPY . .
 RUN npm i --location=global pm2

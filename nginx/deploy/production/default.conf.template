@@ -1,6 +1,5 @@
 server {
     listen 80;
-    server_name localhost;
 
     location / {
         root /usr/share/nginx/html;
@@ -9,7 +8,7 @@ server {
     }
 
     location /api {
-        proxy_pass http://backend:5000; # Use the service name defined in docker-compose.yml
+       proxy_pass http://${LOADBALANCER_DNS_NAME}:5000;
     }
 
     # Additional Nginx configuration for caching, SSL, etc., can be added here if needed

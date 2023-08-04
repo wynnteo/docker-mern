@@ -43,7 +43,7 @@ export const authLogout = () => {
   } else {
     axios
       .post(
-        `${process.env.REACT_APP_API_SERVER}/api/auth/logout/`,
+        `${process.env.REACT_APP_API_SERVER}api/auth/logout/`,
         {},
         { headers: { Authorization: `Token ${token}` } }
       )
@@ -74,7 +74,7 @@ export const authLogin = (username, password) => {
   return (dispatch) => {
     dispatch(authStart());
     axios
-      .post(`${process.env.REACT_APP_API_SERVER}/api/auth/login/`, {
+      .post(`${process.env.REACT_APP_API_SERVER}api/auth/login/`, {
         username: username,
         password: password,
       })
@@ -98,7 +98,7 @@ export const authSignup = (username, email, password1, password2) => {
   return (dispatch) => {
     dispatch(authStart());
     axios
-      .post(`${process.env.REACT_APP_API_SERVER}/api/auth/signup/`, {
+      .post(`${process.env.REACT_APP_API_SERVER}api/auth/signup/`, {
         username: username,
         email: email,
         password1: password1,
@@ -124,7 +124,7 @@ export const resetPassword = (resetToken, newPassword, navigate) => {
   return (dispatch) => {
     dispatch(authStart());
     axios
-      .post(`${process.env.REACT_APP_API_SERVER}/api/auth/reset-password/`, {
+      .post(`${process.env.REACT_APP_API_SERVER}api/auth/reset-password/`, {
         resetToken: resetToken,
         newPassword: newPassword,
       })

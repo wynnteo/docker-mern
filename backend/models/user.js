@@ -16,10 +16,7 @@ const userSchema = mongoose.Schema({
     type: Boolean,
     required: false,
   },
-  admin: {
-    type: Boolean,
-    required: false,
-  },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
 });
 
 const User = mongoose.model("User", userSchema);

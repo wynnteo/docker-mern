@@ -40,7 +40,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchMessage = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_SERVER}/api/auth/welcome`);
+        const response = await axios.get(`${process.env.REACT_APP_API_SERVER}api/auth/welcome`);
         setMsg(response.data.msg);
       } catch (error) {
         console.error("Error fetching welcome message:", error);
