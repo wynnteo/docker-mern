@@ -1,0 +1,40 @@
+{
+    "family": "mern-backend-task",
+    "networkMode": "awsvpc",
+    "executionRoleArn": "YOUR_TASK_EXECUTION_ROLE_ARN",
+    "taskRoleArn": "YOUR_TASK_ROLE_ARN",
+    "containerDefinitions": [
+      {
+        "name": "backend-container",
+        "image": "YOUR_BACKEND_IMAGE_URI",
+        "portMappings": [
+          {
+            "containerPort": 5000,
+            "protocol": "tcp"
+          }
+        ],
+        "environment": [
+          {
+            "name": "DB_HOST",
+            "value": "mongo-container"
+          }
+        ],
+        "memory": 512,
+        "cpu": 256,
+        "essential": true
+      }
+    ],
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "tags": [
+      {
+        "key": "Name",
+        "value": "Backend-Task"
+      }
+    ],
+    "dnsSearchDomains": ["mern-service-discovery.local"],
+    "dnsServers": ["AmazonProvidedDNS"],
+    "healthCheckGracePeriodSeconds": 60
+  }
+  

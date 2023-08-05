@@ -221,26 +221,41 @@ Resources:
       VpcId:
         Ref: VPC
       SecurityGroupIngress:
-      - IpProtocol: -1
-        CidrIp: 0.0.0.0/0
-  LoadBalancerSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Access to the public facing load balancer
-      VpcId:
-        Ref: VPC
-      SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 80
         ToPort: 80
         CidrIp: 0.0.0.0/0
+  BackendServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Backend Service Security Group
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 5000
+        ToPort: 5000
+        SourceSecurityGroupId:
+          Ref: ALBSecurityGroup
+  MongoServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Mongo Service Security Group
+      VpcId:
+        Ref: VPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 27017
+        ToPort: 27017
+        SourceSecurityGroupId:
+          Ref: BackendServiceSecurityGroup
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: mern-app-load-balancer
       Scheme: internet-facing
       SecurityGroups:
-      - Ref: LoadBalancerSecurityGroup
+      - Ref: ALBSecurityGroup
       Subnets:
       - Ref: PublicSubnet1
       - Ref: PublicSubnet2
@@ -433,7 +448,7 @@ Resources:
           - Ref: PrivateSubnet1
           - Ref: PrivateSubnet2
           SecurityGroups:
-          - Ref: ALBSecurityGroup
+          - Ref: MongoServiceSecurityGroup
       ServiceRegistries:
       - RegistryArn:
           Fn::GetAtt:
@@ -456,7 +471,7 @@ Resources:
           - Ref: PrivateSubnet1
           - Ref: PrivateSubnet2
           SecurityGroups:
-          - Ref: ALBSecurityGroup
+          - Ref: BackendServiceSecurityGroup
       ServiceRegistries:
       - RegistryArn:
           Fn::GetAtt:
@@ -487,10 +502,6 @@ Resources:
         TargetGroupArn:
           Ref: TargetGroup
 Outputs:
-  VpcId:
-    Description: The ID of the VPC that this stack is deployed in
-    Value:
-      Ref: VPC
   ExternalUrl:
     Description: The URL of the external load balancer
     Value:

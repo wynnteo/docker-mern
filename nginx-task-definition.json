@@ -1,0 +1,33 @@
+{
+    "family": "mern-nginx-task",
+    "networkMode": "awsvpc",
+    "executionRoleArn": "YOUR_TASK_EXECUTION_ROLE_ARN",
+    "taskRoleArn": "YOUR_TASK_ROLE_ARN",
+    "containerDefinitions": [
+      {
+        "name": "nginx-container",
+        "image": "YOUR_NGINX_IMAGE_URI",
+        "portMappings": [
+          {
+            "containerPort": 80,
+            "protocol": "tcp"
+          }
+        ],
+        "memory": 1024,
+        "cpu": 512,
+        "essential": true
+      }
+    ],
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "512",
+    "memory": "1024",
+    "tags": [
+      {
+        "key": "Name",
+        "value": "Nginx-Task"
+      }
+    ],
+    "dnsSearchDomains": ["mern-service-discovery.local"],
+    "dnsServers": ["AmazonProvidedDNS"]
+  }
+  
