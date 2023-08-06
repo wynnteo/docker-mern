@@ -22,7 +22,6 @@ app.use(
   })
 );
 app.use(passport.initialize());
-app.use(passport.session());
 
 // disable 'X-Powered-By' header in response
 app.disable("x-powered-by");

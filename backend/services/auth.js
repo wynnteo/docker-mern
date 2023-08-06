@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const User = require("../models/user");
+const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const { infoLogger, errorLogger } = require("../helpers/logger");
 
@@ -39,6 +39,44 @@ const auth = {
       });
     });
   },
+
+
+  // const login = function (req, res, next) {
+  //   passport.authenticate('local', { session: false }, (err, user, info) => {
+  //     if (err) {
+  //       console.error(err);
+  //       return res.status(422).json({ success: false, msg: 'Something went wrong.' });
+  //     }
+  
+  //     if (!user) {
+  //       return res.status(422).json({ success: false, msg: 'Invalid credentials.' });
+  //     }
+  
+  //     req.login(user, { session: false }, (err) => {
+  //       if (err) {
+  //         console.error(err);
+  //         return res.status(422).json({ success: false, msg: 'Something went wrong.' });
+  //       }
+  
+  //       const token = jwt.sign({ data: user }, process.env.JWT_SECRET, {
+  //         expiresIn: '1h', // Set token expiration time as needed
+  //       });
+  
+  //       return res.status(200).json({
+  //         msg: 'Logged in Successfully.',
+  //         success: true,
+  //         token: 'JWT ' + token,
+  //         user: {
+  //           id: user._id,
+  //           email: user.email,
+  //           name: user.studentName,
+  //           admin: user.admin,
+  //         },
+  //       });
+  //     });
+  //   })(req, res, next);
+  // };
+  
 
   login: function (req, res) {
     const email = req.body.email;
