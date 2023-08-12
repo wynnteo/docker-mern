@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../services/auth");
-const passport = require("passport");
+const checkRole = require("../middlewares/checkRole");
+const rateLimit = require("../middlewares/rateLimit");
+const authenticated = require("../middlewares/authenticated");
 const params_validator = require("../helpers/params-validator");
 const Joi = require("joi");
 
@@ -10,7 +12,11 @@ router.get("/welcome", (req, res, next) => {
     success: true,
     msg: "Welcome to my page.",
   });
-})
+});
+
+router.get("/admin", authenticated, checkRole("admin"), (req, res) => {
+  res.json({ message: "Welcome, Admin!" });
+});
 
 router.post(
   "/signup",
@@ -42,16 +48,19 @@ router.post(
       .max(20)
       .required(),
   }),
+  rateLimit,
   auth.login
 );
 
-router.get(
-  "/profile",
-  passport.authenticate("user", { session: false }),
-  (req, res, next) => {
+router.post("/refresh-token", auth.refreshToken);
+router.post("/logout", authenticated, auth.logout);
+router.get("/profile", authenticated, (req, res, next) => {
+  try {
     res.status(200).json({ success: true, user: req.user });
+  } catch (err) {
+    throw err;
   }
-);
+});
 
 router.post(
   "/update-password",

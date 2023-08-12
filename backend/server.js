@@ -1,50 +1,58 @@
+const path = require("path");
 require("dotenv").config({
-  path: `./.env.${process.env.NODE_ENV}`,
+  path: path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`),
 });
-require("./config/db-connection");
+
 const express = require("express");
-const expressSession = require("express-session");
+const helmet = require("helmet");
 const cors = require("cors");
 const passport = require("passport");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+const authRoutes = require("./routes/user");
 const { infoLogger } = require("./helpers/logger");
+const PORT = process.env.SERVER_PORT || 8000;
 
 const app = express();
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(
-  expressSession({
-    secret: process.env.JWT_SECRET,
-    resave: true,
-    saveUninitialized: true,
-  })
-);
-app.use(passport.initialize());
-
 // disable 'X-Powered-By' header in response
 app.disable("x-powered-by");
 
-require("./helpers/passport")(passport);
+// db connection
+require("./config/db-connection");
+
+app.use(passport.initialize());
+require("./config/passport");
+
 app.use(infoLogger);
-app.use(rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-})); 
 
-app.all('/api/v1/*', [require('./middlewares/token')]);
-app.use("/api/auth/", require("./routes/auth"));
+//app.all("/api/protected/*", [require("./middlewares/authenticated")]);
+app.use("/api/", authRoutes);
 
-// default case for unmatched routes
-app.use(function (req, res) {
-  res.status(404);
+app.use((req, res, next) => {
+  const err = new Error("Not Found");
+  err.status = 404;
+  //logger.error("Error connecting from " + req.ip, "Service Not Found 404");
+  res.status(404).send("Service Not Found 404");
 });
 
-const port = process.env.SERVER_PORT;
+// General error-handling middleware
+app.use((err, req, res, next) => {
+  // Use error status if set, otherwise default to 500
+  res.status(err.status || 500);
 
-app.listen(port, () => {
-  console.log(`\nServer Started on ${port}`);
+  // Display error message. In production, you might not want to send the error stack for security reasons.
+  res.json({
+    error: {
+      message: err.message,
+      stack: process.env.NODE_ENV === "production" ? null : err.stack,
+    },
+  });
 });
+
+app.listen(PORT, () => {
+  console.log(`Server is running on PORT: ${PORT}`);
+});
+
+module.exports = app;

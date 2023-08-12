@@ -4,17 +4,16 @@
   "description": "Backend application built using Node JS & Express JS",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start-prod": "NODE_ENV=production node server.js",
-    "scan": "auditjs ossi",
-    "start": "SET NODE_ENV=development && nodemon server.js"
+    "test": "NODE_ENV=development mocha ./test/*.test.js",
+    "start": "NODE_ENV=development nodemon server.js",
+    "startprod": "NODE_ENV=production node server.js",
+    "scan": "auditjs ossi"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
@@ -29,11 +28,13 @@
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "winston": "^3.10.0",
-    "winston-daily-rotate-file": "^4.7.1"
+    "winston": "^3.10.0"
   },
   "devDependencies": {
     "auditjs": "^4.0.41",
+    "chai": "^4.3.7",
+    "chai-http": "^4.4.0",
+    "mocha": "^10.2.0",
     "nodemon": "^3.0.1"
   }
 }

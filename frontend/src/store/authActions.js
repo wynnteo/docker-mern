@@ -70,12 +70,12 @@ export const authCheckTimeout = (expirationTime) => {
   };
 };
 
-export const authLogin = (username, password) => {
+export const authLogin = (email, password) => {
   return (dispatch) => {
     dispatch(authStart());
     axios
-      .post(`${process.env.REACT_APP_API_SERVER}api/auth/login/`, {
-        username: username,
+      .post(`${process.env.REACT_APP_API_SERVER}api/login/`, {
+        email: email,
         password: password,
       })
       .then((res) => {
@@ -130,7 +130,7 @@ export const resetPassword = (resetToken, newPassword, navigate) => {
       })
       .then((res) => {
         dispatch(resetPasswordSuccess());
-        navigate("/signin")
+        navigate("/signin");
       })
       .catch((err) => {
         dispatch(resetPasswordFail(err));

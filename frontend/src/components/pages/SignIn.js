@@ -15,7 +15,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { authLogin } from "../../store/authActions";
+import { authLogin, authFail } from "../../store/authActions";
 import { useNavigate, useLocation } from "react-router-dom";
 
 function Copyright(props) {
@@ -38,7 +38,7 @@ function Copyright(props) {
 
 const defaultTheme = createTheme();
 
-const SignIn = ({ authLogin, isAuthenticated }) => {
+const SignIn = ({ authLogin, isAuthenticated, error }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { from } = location.state || { from: { pathname: "/" } };
@@ -64,6 +64,10 @@ const SignIn = ({ authLogin, isAuthenticated }) => {
       email: data.get("email"),
       password: data.get("password"),
     });
+    if (error) {
+      // Dispatch authFail action to reset the error state
+      authFail(null);
+    }
   };
 
   return (
@@ -153,6 +157,7 @@ SignIn.propTypes = {
 
 const mapStateToProps = (state) => ({
   isAuthenticated: state.auth.isAuthenticated,
+  error: state.auth.error, // Add this line
 });
 
 export default connect(mapStateToProps, { authLogin })(SignIn);

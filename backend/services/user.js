@@ -1,53 +1,62 @@
-const bcrypt = require("bcryptjs");
-const User = require("../models/user");
+updatePassword: function (req, res) {
+  const newUser = {
+    email: req.body.email,
+    currentPassword: req.body.currentPassword,
+    newPassword: req.body.newPassword,
+    newConfirmPassword: req.body.newConfirmPassword,
+  };
 
-const UserServices = {
-  getUserById: function (id, callback) {
-    User.findById({ _id: id }, callback);
-  },
-  authenticateUser: function (email, callback) {
-    User.updateOne(
-      { email: email },
-      { $set: { authenticated: true } },
-      callback
-    );
-  },
-  getUserByEmail: function (email, callback) {
-    const query = { email: email };
-    User.findOne(query, callback);
-  },
-  addUser: function (newUser, callback) {
-    bcrypt.genSalt(10, (err, salt) => {
-      bcrypt.hash(newUser.password, salt, (err, hash) => {
-        if (err) throw err;
-        newUser.password = hash;
-        newUser.save(callback);
-      });
+  if (newUser.newPassword != newUser.newConfirmPassword) {
+    return res.status(422).json({
+      success: false,
+      msg: "Both password fields do not match.",
     });
-  },
-  comparePassword: function (candidatePassword, hash, callback) {
-    if (!candidatePassword) {
-      return false;
+  }
+
+  if (newUser.currentPassword == newUser.newPassword) {
+    return res.status(422).json({
+      success: false,
+      msg: "Current password matches with the new password.",
+    });
+  }
+
+  auth.getUserByEmail(newUser.email, (err, user) => {
+    if (err) {
+      return res
+        .status(422)
+        .json({ success: false, msg: "Something went wrong." });
     }
-    bcrypt.compare(candidatePassword, hash, (err, isMatch) => {
-      if (err) throw err;
-      callback(null, isMatch);
-    });
-  },
-  updatePassword: function (newUser, callback) {
-    bcrypt.genSalt(10, (err, salt) => {
-      if (err) throw err;
-      bcrypt.hash(newUser.newPassword, salt, (err, hash) => {
-        if (err) throw err;
-        newUser.newPassword = hash;
-        User.updateOne(
-          { email: newUser.email },
-          { $set: { password: newUser.newPassword } },
-          callback
-        );
-      });
-    });
-  },
-};
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found." });
+    }
+    auth.comparePassword(
+      newUser.currentPassword,
+      user.password,
+      (err, isMatch) => {
+        if (err) {
+          errorLogger.error(err);
 
-module.exports = UserServices;
+          return res
+            .status(422)
+            .json({ success: false, msg: "Something went wrong." });
+        }
+        if (!isMatch) {
+          return res
+            .status(422)
+            .json({ success: false, msg: "Incorrect password." });
+        }
+        user.updatePassword2(newUser, (err) => {
+          if (err) {
+            errorLogger.error(err);
+            return res
+              .status(422)
+              .json({ success: false, msg: "Something went wrong." });
+          }
+          return res
+            .status(200)
+            .json({ success: true, msg: "Password updated." });
+        });
+      }
+    );
+  });
+},

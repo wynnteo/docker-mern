@@ -1,216 +1,183 @@
-const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-const { infoLogger, errorLogger } = require("../helpers/logger");
+const passport = require("passport");
+const bcrypt = require("bcryptjs");
 
 const auth = {
-  signup: function (req, res) {
+  signup: async function (req, res) {
     let newUser = new User({
       email: req.body.email,
       password: req.body.password,
       name: req.body.name,
+      role: req.body.role,
     });
-    auth.getUserByEmail(newUser.email, (err, user) => {
-      if (err) {
-        errorLogger.error(err);
-        return res
-          .status(422)
-          .json({ success: false, msg: "Something went wrong." });
-      }
-      if (user) {
+
+    try {
+      const existingUser = await User.findOne({ email: newUser.email });
+
+      if (existingUser) {
         return res.status(422).json({
           success: false,
           msg: "Email has already been registered with us.",
         });
       }
 
-      auth.addUser(newUser, (err) => {
+      await newUser.save();
+      return res.status(200).json({
+        success: true,
+        msg: "User registered successfully.",
+      });
+    } catch (err) {
+      errorLogger.error(err);
+      return res.status(422).json({
+        success: false,
+        msg: "Something went wrong.",
+      });
+    }
+  },
+
+  login: function (req, res, next) {
+    passport.authenticate("local", { session: false }, (err, user, info) => {
+      if (err || !user)
+        return res.status(422).json({
+          success: false,
+          msg: info?.message || "Authentication failed",
+        });
+
+      req.login(user, { session: false }, (err) => {
         if (err) {
-          errorLogger.error(err);
-          return res.status(422).json({
-            success: false,
-            msg: "Something went wrong.",
-          });
+          console.error(err);
+          return res
+            .status(422)
+            .json({ success: false, msg: "Something went wrong." });
         }
-        res.status(200).json({
+
+        const token = jwt.sign(
+          {
+            data: {
+              id: user._id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+            },
+          },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "1h", // Set token expiration time as needed
+          }
+        );
+
+        const refreshToken = jwt.sign(
+          {
+            data: {
+              id: user._id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+            },
+          },
+          process.env.REFRESH_TOKEN_SECRET,
+          {
+            expiresIn: "7d", // Refresh token typically lasts longer
+          }
+        );
+
+        user.refreshToken = refreshToken;
+        user.save();
+
+        return res.status(200).json({
+          msg: "Logged in Successfully.",
           success: true,
-          msg: "User registered successfully.",
+          token: "JWT " + token,
+          refreshToken: refreshToken,
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
         });
       });
-    });
+    })(req, res, next);
   },
 
+  refreshToken: async function (req, res) {
+    const refreshToken = req.body.token;
 
-  // const login = function (req, res, next) {
-  //   passport.authenticate('local', { session: false }, (err, user, info) => {
-  //     if (err) {
-  //       console.error(err);
-  //       return res.status(422).json({ success: false, msg: 'Something went wrong.' });
-  //     }
-  
-  //     if (!user) {
-  //       return res.status(422).json({ success: false, msg: 'Invalid credentials.' });
-  //     }
-  
-  //     req.login(user, { session: false }, (err) => {
-  //       if (err) {
-  //         console.error(err);
-  //         return res.status(422).json({ success: false, msg: 'Something went wrong.' });
-  //       }
-  
-  //       const token = jwt.sign({ data: user }, process.env.JWT_SECRET, {
-  //         expiresIn: '1h', // Set token expiration time as needed
-  //       });
-  
-  //       return res.status(200).json({
-  //         msg: 'Logged in Successfully.',
-  //         success: true,
-  //         token: 'JWT ' + token,
-  //         user: {
-  //           id: user._id,
-  //           email: user.email,
-  //           name: user.studentName,
-  //           admin: user.admin,
-  //         },
-  //       });
-  //     });
-  //   })(req, res, next);
-  // };
-  
-
-  login: function (req, res) {
-    const email = req.body.email;
-    const password = req.body.password;
-
-    auth.getUserByEmail(email, (err, emailUser) => {
-      if (err) {
-        errorLogger.error(err);
-        return res
-          .status(422)
-          .json({ success: false, msg: "Something went wrong." });
-      }
-      if (!emailUser) {
-        return res
-          .status(422)
-          .json({ success: false, msg: "Invalid credentials." });
-      }
-      let finalUser = emailUser;
-      auth.comparePassword(
-        password,
-        finalUser.password,
-        (err, isMatch) => {
-          if (err) {
-            errorLogger.error(err);
-            return res
-              .status(422)
-              .json({ success: false, msg: "Something went wrong." });
-          }
-          if (!isMatch) {
-            return res
-              .status(422)
-              .json({ success: false, msg: "Invalid credentials." });
-          }
-
-          const token = jwt.sign(
-            { data: finalUser },
-            process.env.JWT_SECRET,
-            {}
-          );
-          res.status(200).json({
-            msg: "Logged in Successfully.",
-            success: true,
-            token: "JWT " + token,
-            user: {
-              id: finalUser._id,
-              email: finalUser.email,
-              name: finalUser.studentName,
-              admin: finalUser.admin,
-            },
-          });
-        }
-      );
-    });
-  },
-
-  updatePassword: function (req, res) {
-    const newUser = {
-      email: req.body.email,
-      currentPassword: req.body.currentPassword,
-      newPassword: req.body.newPassword,
-      newConfirmPassword: req.body.newConfirmPassword,
-    };
-
-    if (newUser.newPassword != newUser.newConfirmPassword) {
-      return res.status(422).json({
-        success: false,
-        msg: "Both password fields do not match.",
-      });
+    const user = await User.findOne({ refreshToken: refreshToken });
+    if (!user) {
+      return res
+        .status(403)
+        .json({ error: "Invalid or expired refresh token" });
     }
 
-    if (newUser.currentPassword == newUser.newPassword) {
-      return res.status(422).json({
-        success: false,
-        msg: "Current password matches with the new password.",
-      });
-    }
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ error: "Invalid refresh token" });
 
-    auth.getUserByEmail(newUser.email, (err, user) => {
-      if (err) {
-        return res
-          .status(422)
-          .json({ success: false, msg: "Something went wrong." });
-      }
-      if (!user) {
-        return res.status(404).json({ success: false, msg: "User not found." });
-      }
-      auth.comparePassword(
-        newUser.currentPassword,
-        user.password,
-        (err, isMatch) => {
-          if (err) {
-            errorLogger.error(err);
-
-            return res
-              .status(422)
-              .json({ success: false, msg: "Something went wrong." });
-          }
-          if (!isMatch) {
-            return res
-              .status(422)
-              .json({ success: false, msg: "Incorrect password." });
-          }
-          auth.updatePassword(newUser, (err) => {
-            if (err) {
-              errorLogger.error(err);
-              return res
-                .status(422)
-                .json({ success: false, msg: "Something went wrong." });
-            }
-            return res
-              .status(200)
-              .json({ success: true, msg: "Password updated." });
-          });
+      const newToken = jwt.sign(
+        {
+          data: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "1h",
         }
       );
+
+      // Invalidate the used refresh token and issue a new one
+      user.refreshToken = jwt.sign(
+        {
+          data: {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+          expiresIn: "7d", // Example expiration
+        }
+      );
+      user.save();
+
+      return res.status(200).json({
+        token: "JWT " + newToken,
+        refreshToken: user.refreshToken,
+      });
     });
   },
 
+  logout: async function (req, res) {
+    console.error(req.body);
+    const refreshToken = req.body.token;
+    const userId = req.body.userId;
 
-  getUserById: function (id, callback) {
-    User.findById({ _id: id }, callback);
-  },
-  
-  authenticateUser: function (email, callback) {
-    User.updateOne(
-      { email: email },
-      { $set: { authenticated: true } },
-      callback
-    );
-  },
+    if (!refreshToken) {
+      return res.status(400).json({ error: "No token provided" });
+    }
 
-  getUserByEmail: function (email, callback) {
-    const query = { email: email };
-    User.findOne(query, callback);
+    try {
+      const updatedUser = await User.updateOne(
+        { refreshToken: refreshToken },
+        { $set: { refreshToken: null } }
+      );
+
+      if (updatedUser.nModified === 0) {
+        return res
+          .status(404)
+          .json({ error: "User not found or already logged out" });
+      }
+
+      return res.status(200).json({ message: "Successfully logged out" });
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to revoke token" });
+    }
   },
 
   addUser: function (newUser, callback) {
@@ -219,31 +186,6 @@ const auth = {
         if (err) throw err;
         newUser.password = hash;
         newUser.save(callback);
-      });
-    });
-  },
-
-  comparePassword: function (candidatePassword, hash, callback) {
-    if (!candidatePassword) {
-      return false;
-    }
-    bcrypt.compare(candidatePassword, hash, (err, isMatch) => {
-      if (err) throw err;
-      callback(null, isMatch);
-    });
-  },
-
-  updatePassword: function (newUser, callback) {
-    bcrypt.genSalt(10, (err, salt) => {
-      if (err) throw err;
-      bcrypt.hash(newUser.newPassword, salt, (err, hash) => {
-        if (err) throw err;
-        newUser.newPassword = hash;
-        User.updateOne(
-          { email: newUser.email },
-          { $set: { password: newUser.newPassword } },
-          callback
-        );
       });
     });
   },
