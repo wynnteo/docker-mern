@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -38,7 +39,7 @@ function Copyright(props) {
 
 const defaultTheme = createTheme();
 
-const SignIn = ({ authLogin, isAuthenticated, error }) => {
+const SignIn = ({ authLogin, authFail, isAuthenticated, error }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { from } = location.state || { from: { pathname: "/" } };
@@ -60,12 +61,8 @@ const SignIn = ({ authLogin, isAuthenticated, error }) => {
     const data = new FormData(event.currentTarget);
 
     authLogin(email, password);
-    console.log({
-      email: data.get("email"),
-      password: data.get("password"),
-    });
+
     if (error) {
-      // Dispatch authFail action to reset the error state
       authFail(null);
     }
   };
@@ -88,6 +85,7 @@ const SignIn = ({ authLogin, isAuthenticated, error }) => {
           <Typography component="h1" variant="h5">
             Sign in
           </Typography>
+          {error && <Alert severity="error">{error.response.data.msg}</Alert>}
           <Box
             component="form"
             onSubmit={handleSubmit}
@@ -152,12 +150,13 @@ const SignIn = ({ authLogin, isAuthenticated, error }) => {
 
 SignIn.propTypes = {
   authLogin: PropTypes.func.isRequired,
+  authFail: PropTypes.func.isRequired,
   isAuthenticated: PropTypes.bool,
 };
 
 const mapStateToProps = (state) => ({
   isAuthenticated: state.auth.isAuthenticated,
-  error: state.auth.error, // Add this line
+  error: state.auth.error,
 });
 
-export default connect(mapStateToProps, { authLogin })(SignIn);
+export default connect(mapStateToProps, { authLogin, authFail })(SignIn);

@@ -94,15 +94,14 @@ export const authLogin = (email, password) => {
   };
 };
 
-export const authSignup = (username, email, password1, password2) => {
+export const authSignup = (name, email, password1, password2) => {
   return (dispatch) => {
     dispatch(authStart());
     axios
-      .post(`${process.env.REACT_APP_API_SERVER}api/auth/signup/`, {
-        username: username,
+      .post(`${process.env.REACT_APP_API_SERVER}api/signup/`, {
+        name: name,
         email: email,
-        password1: password1,
-        password2: password2,
+        password: password1,
       })
       .then((res) => {
         const token = res.data.token;
@@ -113,6 +112,8 @@ export const authSignup = (username, email, password1, password2) => {
         localStorage.setItem("expirationDate", expirationDate);
         dispatch(authSuccess(token));
         dispatch(authCheckTimeout(SESSION_DURATION));
+
+        // redirect
       })
       .catch((err) => {
         dispatch(authFail(err));

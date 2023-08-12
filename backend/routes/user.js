@@ -26,13 +26,8 @@ router.post(
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
       )
       .required(),
-    password: Joi.string()
-      .pattern(
-        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&(=)<>.,/])[A-Za-z\d@$!%*#?&(=)<>.,/]{6,}$/
-      )
-      .max(20)
-      .required(),
-    name: Joi.string().min(2).max(40).required(),
+    password: Joi.string().required(),
+    name: Joi.string().required(),
   }),
   auth.signup
 );
@@ -41,12 +36,7 @@ router.post(
   "/login",
   params_validator.validateParams({
     email: Joi.string().min(8).max(20).required(),
-    password: Joi.string()
-      .pattern(
-        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&(=)<>.,/])[A-Za-z\d@$!%*#?&(=)<>.,/]{6,}$/
-      )
-      .max(20)
-      .required(),
+    password: Joi.string().required(),
   }),
   rateLimit,
   auth.login
@@ -62,20 +52,20 @@ router.get("/profile", authenticated, (req, res, next) => {
   }
 });
 
-router.post(
-  "/update-password",
-  params_validator.validateParams({
-    email: Joi.string().max(20).required(),
-    currentPassword: Joi.string().max(20).required(),
-    newPassword: Joi.string()
-      .pattern(
-        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&(=)<>.,/])[A-Za-z\d@$!%*#?&(=)<>.,/]{6,}$/
-      )
-      .max(20)
-      .required(),
-    newConfirmPassword: Joi.string().max(20).required(),
-  }),
-  auth.updatePassword
-);
+// router.post(
+//   "/update-password",
+//   params_validator.validateParams({
+//     email: Joi.string().max(20).required(),
+//     currentPassword: Joi.string().max(20).required(),
+//     newPassword: Joi.string()
+//       .pattern(
+//         /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&(=)<>.,/])[A-Za-z\d@$!%*#?&(=)<>.,/]{6,}$/
+//       )
+//       .max(20)
+//       .required(),
+//     newConfirmPassword: Joi.string().max(20).required(),
+//   }),
+//   auth.updatePassword
+// );
 
 module.exports = router;

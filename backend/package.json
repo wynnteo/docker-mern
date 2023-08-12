@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=development mocha ./test/*.test.js",
-    "start": "NODE_ENV=development nodemon server.js",
+    "start": "NODE_ENV=development DB_HOST=18.143.75.176 DB_PORT=27017 DB_NAME=geoinsights DB_USER=dev_geoinsights_user DB_PASSWORD=chiaaKaaWe5227q! nodemon server.js",
     "startprod": "NODE_ENV=production node server.js",
     "scan": "auditjs ossi"
   },
